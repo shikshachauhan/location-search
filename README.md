@@ -31,3 +31,15 @@ https://www.digitalocean.com/community/tutorials/how-to-install-and-use-redis
 
 `8. Run application`
     ruby main.rb
+
+
+# Test cases
+
+`1. Intall dependent library`
+    gem install minitest
+
+`2. Checkout to this directory`
+    cd location-search
+
+`3. Run command `
+    ruby test/test_runner.rb

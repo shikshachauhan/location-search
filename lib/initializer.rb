@@ -23,3 +23,5 @@ Elasticsearch.create_index(LOCATION_INDEX, {
     }
   }
 })
+
+REDIS_DB.keys('*cached_res:*').each do |key| REDIS_DB.del(key) end
