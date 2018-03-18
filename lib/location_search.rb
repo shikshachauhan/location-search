@@ -1,4 +1,5 @@
 require 'json'
+require 'timeout'
 require_relative './google_places'
 require_relative './elasticsearch_places'
 require_relative './constants'
@@ -32,23 +33,44 @@ class LocationSearch
 
     # looks for suggestions from elasticsearch
     def load_from_es_places_if_exist?
-      self.es_results = ElasticsearchPlaces.new(user_lat, user_long, keyword)
-      es_results.load
-      if es_results.locations.count == AUTOCOMPLETE_RESULTS_COUNT
-        self.autocomplete_list = es_results.autocomplete_list
-        update_cache
-        return true
+      es_inactive = REDIS_DB.get(:es_inactive).to_i
+      begin
+        if es_inactive < CIRCUIT_BREAK_COUNT #This will break the circuit if ES is down and fall back to Google api
+          Timeout::timeout(ES_TIMEOUT) do
+            self.es_results = ElasticsearchPlaces.new(user_lat, user_long, keyword)
+            es_results.load
+            if es_results.locations.count == AUTOCOMPLETE_RESULTS_COUNT
+              self.autocomplete_list = es_results.autocomplete_list
+              update_cache
+              return true
+            end
+            false
+          end
+
+        else
+          raise "ES not working"
+        end
+      rescue => e
+        if e.class == Timeout::Error
+          if es_inactive.zero?
+            REDIS_DB.set(:es_inactive, 1, ex: ES_RECHECK_TIME)# After ES_RECHECK_TIME, it will again check if ES started working
+          else
+            REDIS_DB.set(:es_inactive, es_inactive + 1)
+          end
+        end
       end
-      false
+
     end
 
     # looks for suggestions from google places api
     def load_from_google_places_if_exists?
-      self.google_results = GooglePlaces.new(user_lat, user_long, keyword)
-      google_results.load
+      Timeout::timeout(GOOGLE_API_TIMEOUT) do
+        self.google_results = GooglePlaces.new(user_lat, user_long, keyword)
+        google_results.load
+      end
       es_results.update_in_background(google_results)
       self.autocomplete_list = google_results.autocomplete_list
       update_cache
     end
-
+    
 end

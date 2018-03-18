@@ -17,7 +17,8 @@ Steps to run(Assuming a Linux OS)
     `gem install redis
     gem install net/http
     gem install uri
-    gem install json`
+    gem install json
+    gem install timeout`
 
 5. Clone this repository
 
