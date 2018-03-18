@@ -1,5 +1,5 @@
 #Run this file
-require_relative './lib/location_search'
+require_relative './lib/search_service'
 
 while(1) do
   puts "Input `|` separated user lattitude, user longitude, destination. Press E to exit"
@@ -11,14 +11,8 @@ while(1) do
     if input.length != 3
       puts "Invalid input"
     else
-      location_search = LocationSearch.new(input[0], input[1], input[2])
-      location_search.load
       puts '==============================================================================='
-      if location_search.autocomplete_list.empty?
-        puts "No Results found"
-      else
-        puts location_search.autocomplete_list
-      end
+      puts SearchService.new.search_location(input[0], input[1], input[2])
     end
 
   end

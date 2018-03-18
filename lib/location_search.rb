@@ -2,6 +2,7 @@ require 'json'
 require_relative './google_places'
 require_relative './elasticsearch_places'
 require_relative './constants'
+require_relative './search_service_interface'
 
 class LocationSearch
 
@@ -14,7 +15,6 @@ class LocationSearch
     self.cache_key = "cached_res:#{[user_lat, user_long, keyword].to_json}"
   end
 
-  # Task 1 - This is calling up the search service
   def load
     load_from_cache_if_exists? || load_from_es_places_if_exist? || load_from_google_places_if_exists?
   end
